@@ -21,7 +21,7 @@ function termPrefs() {
 
 function saveTermPrefs(p) {
   try { localStorage.setItem('wt_term', JSON.stringify(p)); } catch (e) { /* storage unavailable */ }
-  for (const sess of allSessions().filter(x => x.kind !== 'rdp')) {
+  for (const sess of allSessions().filter(x => x.kind === 'ssh')) {
     sess.term.options.fontFamily = p.font;
     sess.term.options.fontSize = p.size;
   }
@@ -33,7 +33,7 @@ function paintTerminalTheme(sess) {
   sess.term.options.theme = t;
   sess.holder.style.setProperty('--term-bg', t.background); // ds-allow: a per-host colour read from the tokens
 }
-themeListeners.push(() => allSessions().filter(s => s.kind !== 'rdp').forEach(paintTerminalTheme));
+themeListeners.push(() => allSessions().filter(s => s.kind === 'ssh').forEach(paintTerminalTheme));
 
 function readSet(key) {
   try { return new Set(JSON.parse(localStorage.getItem(key) || '[]')); } catch (e) { return new Set(); }
@@ -56,7 +56,7 @@ function noteRecent(host) {
 }
 
 const byName = (a, b) => a.name.localeCompare(b.name);
-const protoIcon = h => (h.protocol === 'rdp' ? 'device-desktop' : 'terminal-2');
+const protoIcon = h => (h.protocol === 'ssh' ? 'terminal-2' : 'device-desktop');
 
 /* ---------- data ---------- */
 
@@ -284,8 +284,9 @@ function hostDialog(host, opts = {}) {
   const d = dialog(host ? 'Edit host' : 'New host', `
     <div class="inline">
       <label>Name<input type="text" name="name" value="${esc(h.name)}" required maxlength="80"></label>
-      <label class="narrow wider">Type<select name="protocol"><option value="ssh"${h.protocol !== 'rdp' ? ' selected' : ''}>SSH</option>
-        <option value="rdp"${h.protocol === 'rdp' ? ' selected' : ''}>Desktop (RDP)</option></select></label>
+      <label class="narrow wider">Type<select name="protocol"><option value="ssh"${h.protocol === 'ssh' ? ' selected' : ''}>SSH</option>
+        <option value="rdp"${h.protocol === 'rdp' ? ' selected' : ''}>Desktop (RDP)</option>
+        <option value="vnc"${h.protocol === 'vnc' ? ' selected' : ''}>Desktop (VNC)</option></select></label>
     </div>
     <label>Folder<select name="folder_id">${folderOptions(h.folder_id)}<option value="__new">+ Add new folder</option></select></label>
     <div class="inline">
@@ -293,10 +294,12 @@ function hostDialog(host, opts = {}) {
       <label class="narrow">Port<input type="number" name="port" value="${esc(h.port)}" min="1" max="65535" required></label>
     </div>
     <label>Username<input type="text" name="username" value="${esc(h.username)}" autocapitalize="off" spellcheck="false" autocomplete="off">
-      <span class="small faint" data-proto="rdp">For a domain account, use DOMAIN\\user.</span></label>
+      <span class="small faint" data-proto="rdp">For a domain account, use DOMAIN\\user.</span>
+      <span class="small faint" data-proto="vnc">Only if the server asks for one, as wayvnc does. Leave it empty for a VNC password.</span></label>
     <label data-sshonly>Sign in with<select name="auth"><option value="password"${h.auth === 'password' ? ' selected' : ''}>Password</option>
       <option value="key"${h.auth === 'key' ? ' selected' : ''}>Identity (SSH key)</option></select></label>
-    <label data-for="password">Password${passwordField({ name: 'password', placeholder: h.has_password ? 'Saved. Leave blank to keep it.' : '' })}</label>
+    <label data-for="password">Password${passwordField({ name: 'password', placeholder: h.has_password ? 'Saved. Leave blank to keep it.' : '' })}
+      <span class="small faint" data-proto="vnc">A plain VNC password uses only its first 8 characters.</span></label>
     <label data-for="key" data-sshonly>Identity<select name="identity_id">${idOpts}</select></label>
     <label data-proto="rdp">Security<select name="security">${[['any', 'Automatic'], ['nla', 'Network Level Authentication'], ['tls', 'TLS'], ['rdp', 'Standard RDP (legacy)']]
       .map(([v, t]) => `<option value="${v}"${v === h.security ? ' selected' : ''}>${t}</option>`).join('')}</select></label>
@@ -320,12 +323,14 @@ function hostDialog(host, opts = {}) {
     wide: true,
     extra: host ? '<button type="button" class="danger" data-del>Delete</button>' + moveButtons() : '',
     onSubmit: async fd => {
-      const rdp = fd.get('protocol') === 'rdp';
+      const proto = fd.get('protocol');
+      const rdp = proto === 'rdp';
+      const ssh = proto === 'ssh';
       const body = {
         name: fd.get('name'), folder_id: fd.get('folder_id'), address: fd.get('address'),
         port: Number(fd.get('port')), username: fd.get('username'), protocol: fd.get('protocol'),
-        auth: rdp ? 'password' : fd.get('auth'),
-        identity_id: !rdp && fd.get('auth') === 'key' ? fd.get('identity_id') : '', theme: rdp ? 'auto' : fd.get('theme'),
+        auth: ssh ? fd.get('auth') : 'password',
+        identity_id: ssh && fd.get('auth') === 'key' ? fd.get('identity_id') : '', theme: ssh ? fd.get('theme') : 'auto',
         security: fd.get('security'), ignore_cert: fd.get('ignore_cert') !== null,
         rdp: rdp ? rdpFromForm(fd) : undefined,
       };
@@ -344,15 +349,15 @@ function hostDialog(host, opts = {}) {
     const proto = d.querySelector('[name=protocol]').value;
     const auth = d.querySelector('[name=auth]').value;
     d.querySelectorAll('[data-proto]').forEach(e => { e.hidden = e.dataset.proto !== proto; });
-    d.querySelectorAll('[data-sshonly]').forEach(e => { e.hidden = proto === 'rdp'; });
-    d.querySelectorAll('[data-for]').forEach(l => { l.hidden = proto === 'rdp' ? l.dataset.for !== 'password' : l.dataset.for !== auth; });
+    d.querySelectorAll('[data-sshonly]').forEach(e => { e.hidden = proto !== 'ssh'; });
+    d.querySelectorAll('[data-for]').forEach(l => { l.hidden = proto !== 'ssh' ? l.dataset.for !== 'password' : l.dataset.for !== auth; });
   };
   d.querySelector('[name=res]').addEventListener('change', ev => { d.querySelector('#rescustom').hidden = ev.target.value !== 'custom'; });
   const portField = d.querySelector('[name=port]');
   d.querySelector('[name=protocol]').addEventListener('change', ev => {
     // Swap the default port only if it still holds the other protocol's default.
-    if (ev.target.value === 'rdp' && portField.value === '22') portField.value = '3389';
-    if (ev.target.value === 'ssh' && portField.value === '3389') portField.value = '22';
+    const defaults = { ssh: '22', rdp: '3389', vnc: '5900' };
+    if (Object.values(defaults).includes(portField.value)) portField.value = defaults[ev.target.value];
     sync();
   });
   d.querySelector('[name=auth]').addEventListener('change', sync);
@@ -623,13 +628,14 @@ function updateHead(sess) {
 }
 
 function newSession(host, wtab) {
+  if (host.protocol === 'vnc') return newVncSession(host, wtab);
   return host.protocol === 'rdp' ? newRdpSession(host, wtab) : newSshSession(host, wtab);
 }
 
 // Give keyboard focus to a pane's terminal or remote desktop.
 function sessFocus(sess) {
   if (!sess) return;
-  if (sess.kind === 'rdp') rdpFocus(sess); else sess.term.focus();
+  if (sess.kind === 'rdp') rdpFocus(sess); else if (sess.kind === 'vnc') vncFocus(sess); else sess.term.focus();
 }
 
 function newSshSession(host, wtab) {
@@ -671,6 +677,7 @@ function newSshSession(host, wtab) {
 // The terminal can only be opened once its pane is in the page.
 function ensureOpen(sess) {
   if (sess.kind === 'rdp') return rdpOpen(sess);
+  if (sess.kind === 'vnc') return;
   if (sess.opened) return;
   sess.opened = true;
   sess.term.open(sess.holder);
@@ -693,6 +700,7 @@ function ensureOpen(sess) {
 
 function fitSess(sess) {
   if (sess.kind === 'rdp') return rdpFit(sess);
+  if (sess.kind === 'vnc') return; // noVNC scales itself to its pane
   try { if (sess.opened && !sess.closed && sess.holder.offsetParent !== null) sess.fit.fit(); } catch (e) { /* not laid out yet */ }
 }
 
@@ -707,6 +715,7 @@ function focusSession(sess) {
 
 function connect(sess) {
   if (sess.kind === 'rdp') return rdpConnect(sess);
+  if (sess.kind === 'vnc') return vncConnect(sess);
   clearTimeout(sess.timer);
   setState(sess, 'connecting');
   showOverlay(sess, { title: 'Connecting…' });
@@ -909,6 +918,7 @@ function splitSession(sess, dir) {
 
 function teardown(sess) {
   if (sess.kind === 'rdp') return rdpTeardown(sess);
+  if (sess.kind === 'vnc') return vncTeardown(sess);
   sess.closed = true;
   clearTimeout(sess.timer);
   sess.ro.disconnect();
@@ -991,7 +1001,7 @@ function renderCmdBar() {
   const bar = WS.term && $q(WS.term, '#cmdbar');
   if (!bar) return;
   const sess = WS.active && WS.active.active;
-  const show = !!sess && sess.kind !== 'rdp' && !cmdBarHidden();
+  const show = !!sess && sess.kind === 'ssh' && !cmdBarHidden();
   const wasHidden = bar.hidden;
   bar.hidden = !show;
   if (!show) { if (!wasHidden) fitActive(); return; }
@@ -1028,7 +1038,7 @@ function bindCommandBar() {
 // Puts the command at the cursor, and presses Enter too when run is set. Several lines always ask first.
 function useCommand(cmd, run) {
   const sess = WS.active && WS.active.active;
-  if (!cmd || !sess || sess.kind === 'rdp') return;
+  if (!cmd || !sess || sess.kind !== 'ssh') return;
   if (sess.state !== 'live') { toast('This session is not connected.', 'err'); return; }
   const text = fillCommand(cmd.body, sess.host);
   const go = () => {
@@ -1141,7 +1151,7 @@ function newIdentityDialog() {
 }
 
 function pushDialog(ident) {
-  const sshHosts = WS.hosts.filter(h => h.protocol !== 'rdp');
+  const sshHosts = WS.hosts.filter(h => h.protocol === 'ssh');
   if (!sshHosts.length) {
     dialog(`Push ${ident.name}`, '', { description: 'Add an SSH host first, then push this key to it from the Identities page.' });
     return;
@@ -1315,7 +1325,7 @@ function mountWorkspace(shellEl, termRoot, idRoot) {
     if (!b) return;
     if (b.dataset.key === 'ctrl') return setCtrl(!WS.ctrl);
     const sess = WS.active && WS.active.active;
-    if (sess && sess.kind !== 'rdp') { sendRaw(sess, keys[b.dataset.key]); sess.term.focus(); }
+    if (sess && sess.kind === 'ssh') { sendRaw(sess, keys[b.dataset.key]); sess.term.focus(); }
   });
 
   // Ctrl+K (Cmd+K on a Mac) opens the palette. Inside a terminal or remote desktop on other

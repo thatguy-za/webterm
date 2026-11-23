@@ -178,6 +178,23 @@ type wsClient struct {
 }
 
 func dialWS(t *testing.T, base string, cl *client, hostID string) *wsClient {
+	return dialWSPath(t, base, cl, "/api/ws/ssh/"+hostID)
+}
+
+// tryDialWS opens a WebSocket and returns the error instead of failing the test.
+func tryDialWS(base string, cl *client, path string) (*websocket.Conn, *http.Response, error) {
+	u, _ := url.Parse(base)
+	var cookies []string
+	for _, c := range cl.c.Jar.Cookies(u) {
+		cookies = append(cookies, c.Name+"="+c.Value)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	return websocket.Dial(ctx, "ws"+strings.TrimPrefix(base, "http")+path,
+		&websocket.DialOptions{HTTPHeader: http.Header{"Cookie": {strings.Join(cookies, "; ")}}})
+}
+
+func dialWSPath(t *testing.T, base string, cl *client, path string) *wsClient {
 	u, _ := url.Parse(base)
 	var cookies []string
 	for _, c := range cl.c.Jar.Cookies(u) {
@@ -185,7 +202,7 @@ func dialWS(t *testing.T, base string, cl *client, hostID string) *wsClient {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	t.Cleanup(cancel)
-	c, _, err := websocket.Dial(ctx, "ws"+strings.TrimPrefix(base, "http")+"/api/ws/ssh/"+hostID,
+	c, _, err := websocket.Dial(ctx, "ws"+strings.TrimPrefix(base, "http")+path,
 		&websocket.DialOptions{HTTPHeader: http.Header{"Cookie": {strings.Join(cookies, "; ")}}})
 	if err != nil {
 		t.Fatal(err)

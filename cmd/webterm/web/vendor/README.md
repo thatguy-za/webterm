@@ -10,6 +10,7 @@ update the file, rerun `shasum -a 256 <files> > SHA256SUMS`, and update this tab
 | `xterm.js` | xterm.js | not verified | does not match the 5.5.0 or 5.3.0 npm build |
 | `addon-fit.js` | xterm.js fit addon | not verified | does not match 0.10.0 or 0.8.0 |
 | `guacamole-common.js` | [Apache Guacamole](https://guacamole.apache.org/) client | API 1.5.0 | does not match the npm `guacamole-common-js` 1.5.0 build |
+| `novnc/` (`core/`, `vendor/pako/`) | [noVNC](https://github.com/novnc/noVNC) | 1.7.0 (`@novnc/novnc`, MPL-2.0; pako is MIT) | identical to the `core/` and `vendor/` folders of the npm package; `LICENSE.txt` and `AUTHORS` kept beside it |
 | `guacamole-common.LICENSE` | Apache License 2.0 | | |
 
 The three "not verified" files are the builds we have shipped from the start; replacing them

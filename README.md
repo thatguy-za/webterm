@@ -47,6 +47,7 @@ proxy in front: see [HTTPS and reverse proxies](docs/guide.md#https-and-reverse-
 
 - **SSH terminals** with nested host folders, saved passwords or SSH keys, automatic reconnect, and Ctrl+K search.
 - **Remote desktops (RDP)** in the same tabs, with clipboard, file transfer, audio and per-host display settings.
+- **VNC** desktops too, including a Raspberry Pi's (wayvnc, or RealVNC set to a VNC password), with the login done on the server.
 - **Split panes**: up to six sessions side by side in one tab.
 - **Saved commands**: a bar under each terminal with commands you use often.
 - **Key management**: generate or import SSH keys, and push a public key to many hosts at once.
@@ -72,6 +73,7 @@ This is what WebTerm does to protect what you store in it.
 - Saved passwords and keys are decrypted only while connecting, and are never sent to your browser.
   Viewing a saved password or exporting a private key asks for your account password again.
 - Saved commands are encrypted the same way, per user.
+- For VNC, WebTerm does the login itself and the browser's viewer gets a stream that needs none, so the password never reaches it. A VNC server's TLS certificate is trusted on first use, like an SSH host key.
 
 **Sign-in and sessions.**
 - Sessions use 256-bit random tokens in `HttpOnly`, `SameSite=Strict` cookies (also `Secure` behind HTTPS),

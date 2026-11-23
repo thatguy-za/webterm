@@ -403,7 +403,13 @@ func (s *Server) sshAuth(h *store.Host, a *authed) ([]ssh.AuthMethod, func(), er
 // differs from the stored one, is sent to the browser and the handshake waits
 // for an explicit answer.
 func (s *Server) verifyHostKey(ctx context.Context, h *store.Host, key ssh.PublicKey, send func(serverMsg), trust <-chan bool) error {
-	fp := ssh.FingerprintSHA256(key)
+	return s.confirmFingerprint(ctx, h, key.Type(), ssh.FingerprintSHA256(key), send, trust)
+}
+
+// confirmFingerprint checks a host's key or certificate against the one trusted before. A new one is
+// trusted on first use, after the person confirms it; a changed one asks again, and says it changed.
+// A nil trust channel means nobody can be asked, so anything not already trusted fails.
+func (s *Server) confirmFingerprint(ctx context.Context, h *store.Host, keyType, fp string, send func(serverMsg), trust <-chan bool) error {
 	known, err := s.db.KnownHost(h.ID)
 	if err == nil && known.Fingerprint == fp {
 		return nil
@@ -414,7 +420,7 @@ func (s *Server) verifyHostKey(ctx context.Context, h *store.Host, key ssh.Publi
 		}
 		return errHostKeyUnknown
 	}
-	m := serverMsg{Type: "hostkey", Host: h.Name, KeyType: key.Type(), Fingerprint: fp}
+	m := serverMsg{Type: "hostkey", Host: h.Name, KeyType: keyType, Fingerprint: fp}
 	if err == nil {
 		m.Changed, m.OldPrint = true, known.Fingerprint
 	}
@@ -429,7 +435,7 @@ func (s *Server) verifyHostKey(ctx context.Context, h *store.Host, key ssh.Publi
 	case <-ctx.Done():
 		return ctx.Err()
 	}
-	return s.db.SetKnownHost(h.ID, key.Type(), fp)
+	return s.db.SetKnownHost(h.ID, keyType, fp)
 }
 
 var (

@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -33,10 +34,12 @@ func TestVendoredChecksums(t *testing.T) {
 		}
 		listed[f[1]] = true
 	}
-	entries, _ := os.ReadDir(dir)
-	for _, e := range entries {
-		if n := e.Name(); n != "SHA256SUMS" && n != "README.md" && !listed[n] {
-			t.Errorf("%s is not in SHA256SUMS", n)
+	filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		rel, _ := filepath.Rel(dir, path)
+		rel = filepath.ToSlash(rel)
+		if err == nil && !d.IsDir() && rel != "SHA256SUMS" && rel != "README.md" && !listed[rel] {
+			t.Errorf("%s is not in SHA256SUMS", rel)
 		}
-	}
+		return nil
+	})
 }

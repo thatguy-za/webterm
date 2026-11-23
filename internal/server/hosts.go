@@ -209,6 +209,12 @@ func (s *Server) applyHostInput(h *store.Host, in *hostInput, a *authed) string 
 		if in.Security == "" {
 			in.Security = "any"
 		}
+	} else if in.Protocol == "vnc" {
+		// VNC signs in with a password (and, on some servers, a username), over a direct connection.
+		in.Auth, in.IdentityID, in.Theme = "password", "", "auto"
+		if in.Port == 0 {
+			in.Port = 5900
+		}
 	} else if in.Port == 0 {
 		in.Port = 22
 	}
@@ -218,7 +224,7 @@ func (s *Server) applyHostInput(h *store.Host, in *hostInput, a *authed) string 
 	switch {
 	case in.Name == "" || len(in.Name) > 80, in.Address == "" || len(in.Address) > 255,
 		len(in.Username) > 128, in.Port < 1 || in.Port > 65535, !themes[in.Theme],
-		in.Protocol != "ssh" && in.Protocol != "rdp",
+		in.Protocol != "ssh" && in.Protocol != "rdp" && in.Protocol != "vnc",
 		in.Protocol == "rdp" && !rdpSecurity[in.Security],
 		in.Protocol == "rdp" && in.RDP != nil && !validRDPOptions(in.RDP),
 		in.Auth != "password" && in.Auth != "key":

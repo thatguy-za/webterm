@@ -433,7 +433,7 @@ func TestRDPHostRules(t *testing.T) {
 	if code, _ := u.do("POST", "/api/hosts", map[string]any{"name": "x", "protocol": "rdp", "address": "x", "security": "bogus"}); code != 400 {
 		t.Fatalf("bad security mode: %d", code)
 	}
-	if code, _ := u.do("POST", "/api/hosts", map[string]any{"name": "x", "protocol": "vnc", "address": "x", "auth": "password"}); code != 400 {
+	if code, _ := u.do("POST", "/api/hosts", map[string]any{"name": "x", "protocol": "telnet", "address": "x", "auth": "password"}); code != 400 {
 		t.Fatalf("unknown protocol: %d", code)
 	}
 	_, gen := u.do("POST", "/api/identities/generate", map[string]string{"name": "k", "comment": "c", "kind": "ed25519"})

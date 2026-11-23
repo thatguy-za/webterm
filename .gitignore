@@ -3,3 +3,4 @@
 *.log
 .DS_Store
 tests/ui/out/
+tests/vnc/out/

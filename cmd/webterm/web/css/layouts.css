@@ -90,6 +90,7 @@
 /* ---------- remote desktop ---------- */
 .rdpwrap { position: relative; flex: 1; min-height: 0; background: var(--desktop-bg); overflow: hidden; }
 .rdpscreen { position: absolute; top: 0; left: 0; touch-action: none; }
+.vncscreen { position: absolute; inset: 0; touch-action: none; }
 .sink { position: absolute; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; border: 0; padding: 0; resize: none; font-size: var(--fs-xl); }
 
 /* ---------- pages ---------- */

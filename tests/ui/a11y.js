@@ -34,6 +34,9 @@ const nav = async tab => { await page.click('.nav[data-view=settings]'); await p
     await page.check('input[name=saved]'); await page.click('button:has-text("Continue")'); await page.waitForSelector('#shell');
     await check('welcome-empty');
   });
+  await step('vnc host dialog', async () => {
+    await page.click('#add-host'); await dlg().locator('select[name=protocol]').selectOption('vnc'); await check('host-dialog-vnc'); await close();
+  });
   await step('host dialog', async () => {
     await page.click('#add-host'); await check('host-dialog');
     const d = dlg();

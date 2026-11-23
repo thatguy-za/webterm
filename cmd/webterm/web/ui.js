@@ -69,7 +69,7 @@ const checkField = (name, label, hint = '', attrs = '', checked = false) =>
   `<label class="check" ${attrs}><input type="checkbox" name="${esc(name)}"${checked ? ' checked' : ''}> ${label}${hint ? `<span class="small">${hint}</span>` : ''}</label>`;
 const hostRow = (h, { depth = 0, live = false, kebab = true } = {}) => `
   <div class="row host d${Math.min(depth, 6)}" data-sort-kind="h" data-sort-id="${esc(h.id)}" data-sort-parent="${esc(h.folder_id || '')}" data-sort-depth="${depth}">
-    <button type="button" class="row-main" data-sort="h${esc(h.id)}" data-host="${esc(h.id)}" aria-label="Open ${esc(h.name)}${live ? ' (connected)' : ''}">${icon(h.protocol === 'rdp' ? 'device-desktop' : 'terminal-2')}<span class="name">${esc(h.name)}</span>${live ? '<span class="dot live" aria-hidden="true"></span>' : ''}</button>
+    <button type="button" class="row-main" data-sort="h${esc(h.id)}" data-host="${esc(h.id)}" aria-label="Open ${esc(h.name)}${live ? ' (connected)' : ''}">${icon(h.protocol === 'ssh' ? 'terminal-2' : 'device-desktop')}<span class="name">${esc(h.name)}</span>${live ? '<span class="dot live" aria-hidden="true"></span>' : ''}</button>
     ${kebab ? iconButton('dots', `Edit ${h.name}`, `data-edit-host="${esc(h.id)}"`, 'kebab') : ''}
   </div>`;
 

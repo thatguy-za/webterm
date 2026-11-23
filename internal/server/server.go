@@ -153,6 +153,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/identities/{id}/push", s.auth(true, s.handlePush))
 	mux.HandleFunc("GET /api/ws/ssh/{id}", s.auth(true, s.handleSSH))
 	mux.HandleFunc("GET /api/ws/rdp/{id}", s.auth(true, s.handleRDP))
+	mux.HandleFunc("GET /api/ws/vnc/{id}", s.auth(true, s.handleVNC))
 
 	mux.HandleFunc("GET /api/admin/users", s.admin(s.handleListUsers))
 	mux.HandleFunc("POST /api/admin/users", s.admin(s.handleCreateUser))

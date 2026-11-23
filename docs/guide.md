@@ -62,6 +62,29 @@ server and never reaches the browser.
 Not included yet: microphone, printing, multiple monitors, other keyboard layouts (US only), and a polished on-screen keyboard on phones (typing there is best effort).
 The image is built on `guacamole/guacd:1.6.0`, which is published for both amd64 and arm64.
 
+### Remote desktops (VNC)
+
+Add a host with type *Desktop (VNC)* and open it like the others. WebTerm logs in to the VNC server itself, so the saved
+password stays on the server, and the page shows the desktop with the [noVNC](https://github.com/novnc/noVNC) viewer.
+There is a Ctrl+Alt+Del button, a clipboard panel (text the desktop copies shows up there; type or paste in it and *Send to
+remote* to paste into the desktop), and a *Keyboard* button on touch screens. The desktop is scaled to fit the pane and the
+remote screen's size is left alone.
+
+What it can log in to:
+
+- **wayvnc**, the VNC server of Raspberry Pi OS Bookworm and later (Wayland). The Pi's setup uses a certificate and a username
+  and password checked by the system: enter both on the host. The first time, WebTerm shows the server's certificate fingerprint to
+  trust, as it does for an SSH host key, and warns if it ever changes.
+- **TigerVNC**, **x11vnc** and most others that use a plain **VNC password** (only its first 8 characters count), or a TLS login
+  with a certificate.
+- **RealVNC Server** (older Pi OS, or Bookworm switched to X11) only with *Authentication* set to *VNC password* in its settings.
+  Its own default encrypted login ("UNIX password") is not supported yet, and neither is RSA-AES; the host then says so.
+- A server with no login at all also works, but WebTerm refuses to connect to one if the host has a saved password, in case the
+  login was meant to be on.
+
+To find out which server a Pi runs: `systemctl is-active wayvnc vncserver-x11-serviced` (the first is wayvnc, the second RealVNC).
+The VNC tests in `tests/vnc` run against real TigerVNC and wayvnc servers set up like that.
+
 ### Split panes
 
 Each terminal tab can be split right or down into up to six panes, each its own session. Drag the dividers to resize.
