@@ -293,12 +293,12 @@ function hostDialog(host, opts = {}) {
       <label>Address<input type="text" name="address" value="${esc(h.address)}" required autocapitalize="off" spellcheck="false"></label>
       <label class="narrow">Port<input type="number" name="port" value="${esc(h.port)}" min="1" max="65535" required></label>
     </div>
-    <label>Username<input type="text" name="username" value="${esc(h.username)}" autocapitalize="off" spellcheck="false" autocomplete="off">
+    <label>Username<input type="text" name="username" value="${esc(h.username)}" autocapitalize="off" spellcheck="false" autocomplete="off" ${NO_FILL}>
       <span class="small faint" data-proto="rdp">For a domain account, use DOMAIN\\user.</span>
       <span class="small faint" data-proto="vnc">Only if the server asks for one, as wayvnc does. Leave it empty for a VNC password.</span></label>
     <label data-sshonly>Sign in with<select name="auth"><option value="password"${h.auth === 'password' ? ' selected' : ''}>Password</option>
       <option value="key"${h.auth === 'key' ? ' selected' : ''}>Identity (SSH key)</option></select></label>
-    <label data-for="password">Password${passwordField({ name: 'password', placeholder: h.has_password ? 'Saved. Leave blank to keep it.' : '' })}
+    <label data-for="password">Password${passwordField({ name: 'password', placeholder: h.has_password ? 'Saved. Leave blank to keep it.' : '', ignore: true })}
       <span class="small faint" data-proto="vnc">A plain VNC password uses only its first 8 characters.</span></label>
     <label data-for="key" data-sshonly>Identity<select name="identity_id">${idOpts}</select></label>
     <label data-proto="rdp">Security<select name="security">${[['any', 'Automatic'], ['nla', 'Network Level Authentication'], ['tls', 'TLS'], ['rdp', 'Standard RDP (legacy)']]
@@ -1227,7 +1227,7 @@ function importIdentityDialog() {
     <label>Name<input type="text" name="name" required maxlength="80"></label>
     <label>Private key<textarea name="private_key" rows="6" required spellcheck="false" autocomplete="off" class="mono"
       placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"></textarea></label>
-    <label>Passphrase, if the key has one<input type="password" name="passphrase" autocomplete="off"></label>`, {
+    <label>Passphrase, if the key has one<input type="password" name="passphrase" autocomplete="off" ${NO_FILL}></label>`, {
     submitLabel: 'Import',
     onSubmit: async fd => {
       try {

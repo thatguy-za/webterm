@@ -334,6 +334,18 @@ const dlg = () => page.locator('dialog[open]');
     await page.click('#menu');
     if (!(await page.locator('#side').isVisible())) throw new Error('the sidebar did not come back');
   });
+  await step('password managers are told to leave the host and user dialogs alone', async () => {
+    const ignored = sel => dlg().locator(sel).evaluate(e => ['data-1p-ignore', 'data-lpignore', 'data-bwignore', 'data-form-type'].every(a => e.hasAttribute(a)));
+    await page.click('#add-host');
+    if (!(await ignored('input[name=username]')) || !(await ignored('input[name=password]'))) throw new Error('the host dialog is open to autofill');
+    await dlg().locator('[data-cancel]').first().click();
+    await nav('users'); await page.click('#add');
+    if (!(await ignored('input[name=username]')) || !(await ignored('input[name=password]'))) throw new Error('the add-user dialog is open to autofill');
+    await dlg().locator('[data-cancel]').first().click();
+    // The sign-in forms are the ones a password manager should fill, and still are.
+    const hasIgnore = await page.evaluate(() => !!document.querySelector('#view-settings input[name=current][data-1p-ignore]'));
+    if (hasIgnore) throw new Error('an account password field was marked as not to be filled');
+  });
   await step('tailscale status in the sidebar', async () => {
     const reply = { enabled: true, state: 'connected', hostname: 'webterm-owner', serve_ui: true, port: 3000, has_state: true, peers: [] };
     await page.route('**/api/tailscale', r => (r.request().method() === 'GET' ? r.fulfill({ json: reply }) : r.continue()));

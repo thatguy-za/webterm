@@ -25,9 +25,14 @@ const button = (label, { kind = '', icon: ic = '', attrs = '' } = {}) =>
 const codeBlock = text => `<p class="codeblock">${esc(text)}</p>`;
 const codeGrid = codes => `<div class="codes">${codes.map(c => `<span>${esc(c)}</span>`).join('')}</div>`;
 const panel = inner => `<div class="panel">${inner}</div>`;
-// A password input with an eye button. bindPasswordField wires it up.
-const passwordField = ({ name, placeholder = '', autocomplete = 'new-password' }) =>
-  `<span class="pwfield"><input type="password" name="${esc(name)}" autocomplete="${esc(autocomplete)}" placeholder="${esc(placeholder)}">${iconButton('eye', 'Show password', 'type="button" data-reveal')}</span>`;
+// Tells password managers (1Password, Bitwarden, LastPass, Dashlane) that a field is not a WebTerm login, so they
+// do not offer to fill it with the account's own username and password. Browsers' own managers follow autocomplete.
+const NO_FILL = 'data-1p-ignore data-lpignore="true" data-bwignore="true" data-form-type="other"';
+
+// A password input with an eye button. bindPasswordField wires it up. Set ignore for a secret that belongs
+// to something else, such as a host's password.
+const passwordField = ({ name, placeholder = '', autocomplete = 'new-password', ignore = false }) =>
+  `<span class="pwfield"><input type="password" name="${esc(name)}" autocomplete="${esc(autocomplete)}" placeholder="${esc(placeholder)}"${ignore ? ' ' + NO_FILL : ''}>${iconButton('eye', 'Show password', 'type="button" data-reveal')}</span>`;
 
 // fetchSaved, when given, returns the stored password (or null) for an empty field.
 function bindPasswordField(input, fetchSaved) {

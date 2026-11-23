@@ -271,8 +271,8 @@ async function twoFactorSetupDialog() {
 
 function addUserDialog() {
   dialog('Add a user', `
-    <label>Username<input type="text" name="username" autocomplete="off" autocapitalize="off" required></label>
-    <label>Temporary password<input type="password" name="password" autocomplete="new-password" required></label>
+    <label>Username<input type="text" name="username" autocomplete="off" autocapitalize="off" required ${NO_FILL}></label>
+    <label>Temporary password<input type="password" name="password" autocomplete="new-password" required ${NO_FILL}></label>
     <label>Role<select name="role"><option value="member">Member</option><option value="admin">Admin</option></select></label>`, {
     description: 'They will be asked to choose their own password the first time they sign in.', submitLabel: 'Add user',
     onSubmit: async fd => {
@@ -340,7 +340,7 @@ async function renderTailscale(host) {
 function tailscaleDialog(t, done) {
   const d = dialog(t.enabled ? 'Tailscale settings' : 'Connect to Tailscale', `
     <label>Device name<input type="text" name="hostname" value="${esc(t.hostname)}" maxlength="63" pattern="[a-z0-9]([a-z0-9\\-]*[a-z0-9])?" autocapitalize="off" required></label>
-    <label>Auth key<input type="password" name="auth_key" autocomplete="off"
+    <label>Auth key<input type="password" name="auth_key" autocomplete="off" ${NO_FILL}
       placeholder="${t.has_state ? 'Only needed to join again' : 'Paste a key, or sign in instead'}"></label>
     ${checkField('serve_ui', 'Open the web UI on the tailnet', `Serves this page on port ${t.port} of the device name above. Anyone on your tailnet who can reach it can sign in.`, '', t.serve_ui)}`, {
     description: 'Sign in with Tailscale to approve this device in your browser, or paste an auth key from the admin console (Settings → Keys). A key is used once to join and is not stored.',
